@@ -1,0 +1,7 @@
+{
+  "name": "sotdl-notebook",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
