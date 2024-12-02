@@ -4,14 +4,15 @@ import "@ionic/react/css/core.css";
 import "@ionic/react/css/normalize.css";
 import "@ionic/react/css/structure.css";
 import "@ionic/react/css/typography.css";
+/* Optional PWA Elements */
+import { defineCustomElements } from '@ionic/pwa-elements/loader';
 /* Theme variables */
 import "./theme/variables.css";
 
 import { bookOutline, codeOutline, informationCircleOutline } from "ionicons/icons";
-import React, { useEffect } from "react";
+import React from "react";
 import { Redirect, Route } from "react-router-dom";
 
-import { LiveUpdate } from "@capawesome/capacitor-live-update";
 import {
   IonApp,
   IonIcon,
@@ -26,6 +27,9 @@ import { IonReactRouter } from "@ionic/react-router";
 
 import DetailedErrorBoundary from "./components/DetailedErrorBoundary";
 import EnvironmentBanner from "./components/EnvironmentBanner";
+import { SpellDetailPage } from "./features/spells/pages/SpellDetailPage";
+import { SpellEditPage } from "./features/spells/pages/SpellEditPage";
+import { SpellListPage } from "./features/spells/pages/SpellListPage";
 import BiometricAuthPage from "./pages/functions/BiometricAuthPage";
 import CameraPage from "./pages/functions/CameraPage";
 import FileExplorerPage from "./pages/functions/FileExplorerPage";
@@ -35,27 +39,16 @@ import PushNotificationPage from "./pages/functions/PushNotificationPage";
 import SentryTest from "./pages/functions/SentryTest";
 import FunctionsPage from "./pages/FunctionsPage";
 import InfoPage from "./pages/InfoPage";
-import SpellbookPage from "./pages/SpellbookPage";
 import UnknownRoute from "./pages/UnknownRoute";
+
+// Initialize PWA Elements
+defineCustomElements(window);
 
 setupIonicReact();
 
+const isDevelopment = import.meta.env.DEV;
+
 const App: React.FC = () => {
-  useEffect(() => {
-    const checkForUpdates = async () => {
-      try {
-        const result = await LiveUpdate.sync();
-        if (result.nextBundleId) {
-          console.log("Update available:", result.nextBundleId);
-        }
-      } catch (error) {
-        console.error("Update check failed:", error);
-      }
-    };
-
-    void checkForUpdates();
-  }, []);
-
   return (
     <DetailedErrorBoundary>
       <IonApp>
@@ -65,54 +58,49 @@ const App: React.FC = () => {
             <Route path="/tabs">
               <IonTabs>
                 <IonRouterOutlet>
-                  <Route exact path="/tabs/spellbook">
-                    <SpellbookPage />
-                  </Route>
-                  <Route exact path="/tabs/functions">
-                    <FunctionsPage />
-                  </Route>
-                  <Route exact path="/tabs/info">
-                    <InfoPage />
-                  </Route>
+                  {/* Spellbook routes */}
+                  <Route exact path="/tabs/spellbook" component={SpellListPage} />
+                  <Route exact path="/tabs/spellbook/new" component={SpellEditPage} />
+                  <Route exact path="/tabs/spellbook/spell/:id" component={SpellDetailPage} />
+                  <Route exact path="/tabs/spellbook/spell/:id/edit" component={SpellEditPage} />
+
+                  {/* Development-only routes */}
+                  {isDevelopment && (
+                    <>
+                      <Route exact path="/tabs/functions" component={FunctionsPage} />
+                      <Route exact path="/tabs/info" component={InfoPage} />
+                      <Route exact path="/tabs/functions/location" component={LocationPage} />
+                      <Route exact path="/tabs/functions/push-notifications" component={PushNotificationPage} />
+                      <Route exact path="/tabs/functions/biometric-auth" component={BiometricAuthPage} />
+                      <Route exact path="/tabs/functions/local-notifications" component={LocalNotificationPage} />
+                      <Route exact path="/tabs/functions/sentry-test" component={SentryTest} />
+                      <Route exact path="/tabs/functions/camera" component={CameraPage} />
+                      <Route exact path="/tabs/functions/file-explorer" component={FileExplorerPage} />
+                    </>
+                  )}
+
                   <Route exact path="/tabs">
                     <Redirect to="/tabs/spellbook" />
                   </Route>
-                  {/* Keep function pages for reference */}
-                  <Route exact path="/tabs/functions/location">
-                    <LocationPage />
-                  </Route>
-                  <Route exact path="/tabs/functions/push-notifications">
-                    <PushNotificationPage />
-                  </Route>
-                  <Route exact path="/tabs/functions/biometric-auth">
-                    <BiometricAuthPage />
-                  </Route>
-                  <Route exact path="/tabs/functions/local-notifications">
-                    <LocalNotificationPage />
-                  </Route>
-                  <Route exact path="/tabs/functions/sentry-test">
-                    <SentryTest />
-                  </Route>
-                  <Route exact path="/tabs/functions/camera">
-                    <CameraPage />
-                  </Route>
-                  <Route exact path="/tabs/functions/file-explorer">
-                    <FileExplorerPage />
-                  </Route>
                 </IonRouterOutlet>
+
                 <IonTabBar slot="bottom">
                   <IonTabButton tab="spellbook" href="/tabs/spellbook">
                     <IonIcon icon={bookOutline} />
                     <IonLabel>Spellbook</IonLabel>
                   </IonTabButton>
-                  <IonTabButton tab="functions" href="/tabs/functions">
-                    <IonIcon icon={codeOutline} />
-                    <IonLabel>Dev Tools</IonLabel>
-                  </IonTabButton>
-                  <IonTabButton tab="info" href="/tabs/info">
-                    <IonIcon icon={informationCircleOutline} />
-                    <IonLabel>Info</IonLabel>
-                  </IonTabButton>
+                  {isDevelopment && (
+                    <>
+                      <IonTabButton tab="functions" href="/tabs/functions">
+                        <IonIcon icon={codeOutline} />
+                        <IonLabel>Dev Tools</IonLabel>
+                      </IonTabButton>
+                      <IonTabButton tab="info" href="/tabs/info">
+                        <IonIcon icon={informationCircleOutline} />
+                        <IonLabel>Info</IonLabel>
+                      </IonTabButton>
+                    </>
+                  )}
                 </IonTabBar>
               </IonTabs>
             </Route>

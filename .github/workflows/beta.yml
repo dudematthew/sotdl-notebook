@@ -1,0 +1,74 @@
+name: Beta Release
+
+on:
+  push:
+    branches:
+      - develop
+    tags:
+      - 'v*-beta*'  # Matches v1.0.0-beta.1
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - '.env.example'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build web assets
+        run: pnpm build:dev
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build Android APK
+        run: |
+          pnpm cap sync
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Create Beta Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Beta Release ${{ github.ref }}
+          draft: false
+          prerelease: true
+          body: |
+            Beta release ${{ github.ref }}
+            
+            ⚠️ This is a beta release and may contain bugs.
+
+      - name: Upload Debug APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./android/app/build/outputs/apk/debug/app-debug.apk
+          asset_name: sotdl-spellbook-beta.apk
+          asset_content_type: application/vnd.android.package-archive 
