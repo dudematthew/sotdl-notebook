@@ -27,7 +27,7 @@
     "version:major": "npm version major --message=\"chore(release): %s [skip ci]\"",
     "prepare-release": "git diff --quiet || (git add . && git commit -m \"chore: prepare release\")",
     "release:beta": "git checkout develop && (pnpm prepare-release || true) && npm run version:beta && git push --follow-tags",
-    "release:prod": "git checkout main && (pnpm prepare-release || true) && npm run version:patch && git push --follow-tags",
+    "release:patch": "git checkout main && (pnpm prepare-release || true) && npm run version:patch && git push --follow-tags",
     "release:minor": "git checkout main && (pnpm prepare-release || true) && npm run version:minor && git push --follow-tags",
     "release:major": "git checkout main && (pnpm prepare-release || true) && npm run version:major && git push --follow-tags"
   },

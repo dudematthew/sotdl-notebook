@@ -2,14 +2,8 @@ name: Beta Release
 
 on:
   push:
-    branches:
-      - develop
     tags:
       - 'v*-beta*'  # Matches v1.0.0-beta.1
-    paths-ignore:
-      - '**.md'
-      - '.gitignore'
-      - '.env.example'
 
 jobs:
   build:
@@ -42,11 +36,32 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Decode Keystore File
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+
+      - name: Create keystore.properties
+        run: |
+          echo "storeFile=release.keystore" > android/keystore.properties
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/keystore.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/keystore.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/keystore.properties
+
       - name: Build Android APK
         run: |
           pnpm cap sync
           cd android
           ./gradlew assembleDebug
+          ./gradlew bundleRelease
+
+      - name: Sign APK
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: android/app/build/outputs/apk/debug
+          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Create Beta Release
         id: create_release
@@ -62,6 +77,9 @@ jobs:
             Beta release ${{ github.ref }}
             
             ⚠️ This is a beta release and may contain bugs.
+            
+            Changes in this version:
+            - See commit history for details
 
       - name: Upload Debug APK
         uses: actions/upload-release-asset@v1
@@ -69,6 +87,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./android/app/build/outputs/apk/debug/app-debug.apk
+          asset_path: ${{ env.SIGNED_RELEASE_FILE }}
           asset_name: sotdl-spellbook-beta.apk
-          asset_content_type: application/vnd.android.package-archive 
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload App Bundle
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: android/app/build/outputs/bundle/release/app-release.aab
+          asset_name: sotdl-spellbook-beta.aab
+          asset_content_type: application/octet-stream

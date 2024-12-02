@@ -2,19 +2,11 @@ name: Production Release
 
 on:
   push:
-    branches:
-      - main
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'  # Matches v1.0.0 but not v1.0.0-beta
-    paths-ignore:
-      - '**.md'
-      - '.gitignore'
-      - '.env.example'
 
 jobs:
   build:
-    # Only run on tag pushes to main
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,11 +36,32 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Build Android APK
+      - name: Decode Keystore File
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+
+      - name: Create keystore.properties
+        run: |
+          echo "storeFile=release.keystore" > android/keystore.properties
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/keystore.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/keystore.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/keystore.properties
+
+      - name: Build Android APK and Bundle
         run: |
           pnpm cap sync
           cd android
           ./gradlew assembleRelease
+          ./gradlew bundleRelease
+
+      - name: Sign APK
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: android/app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Create Release
         id: create_release
@@ -63,14 +76,25 @@ jobs:
           body: |
             Production release ${{ github.ref }}
             
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+            Changes in this version:
+            - See CHANGELOG.md for details
 
-      - name: Upload APK
+      - name: Upload Release APK
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./android/app/build/outputs/apk/release/app-release.apk
+          asset_path: ${{ env.SIGNED_RELEASE_FILE }}
           asset_name: sotdl-spellbook.apk
-          asset_content_type: application/vnd.android.package-archive 
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload App Bundle
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: android/app/build/outputs/bundle/release/app-release.aab
+          asset_name: sotdl-spellbook.aab
+          asset_content_type: application/octet-stream
