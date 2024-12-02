@@ -1,108 +1,56 @@
-import React from "react";
+import React from 'react';
+import * as Sentry from '@sentry/react';
 
-import { IonButton, IonContent, IonItem, IonList, IonPage, IonText } from "@ionic/react";
-import * as Sentry from "@sentry/react";
-
-import Header from "../../components/Header";
+import {
+  IonButton,
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+} from '@ionic/react';
 
 const SentryTest: React.FC = () => {
-  const throwError = (): never => {
-    throw new Error("Test error for Sentry monitoring");
+  const throwError = () => {
+    throw new Error('Test error for Sentry');
   };
 
-  const captureMessage = (): void => {
-    Sentry.captureMessage("This is a test message", "info");
-  };
+  const startTransaction = () => {
+    const transaction = Sentry.startTransaction({
+      name: 'Test Transaction',
+      op: 'test',
+    });
 
-  const captureException = (): void => {
+    Sentry.configureScope(scope => {
+      scope.setSpan(transaction);
+    });
+
     try {
-      throw new Error("Test exception for Sentry");
+      // Do something that might fail
+      throw new Error('Test error in transaction');
     } catch (error) {
-      if (error instanceof Error) {
-        Sentry.captureException(error, {
-          tags: {
-            location: "SentryTest",
-            type: "manual_exception",
-          },
-        });
-      }
+      Sentry.captureException(error);
+    } finally {
+      transaction.finish();
     }
-  };
-
-  const createTransaction = (): void => {
-    Sentry.startSpan(
-      {
-        name: "Test Transaction",
-        op: "test",
-        forceTransaction: true,
-      },
-      (span) => {
-        if (span) {
-          span.setTag("location", "SentryTest");
-          span.setTag("type", "manual_exception");
-        }
-
-        // Create a child span
-        Sentry.startSpan(
-          {
-            name: "Child Operation",
-            op: "test.child",
-          },
-          (childSpan) => {
-            if (childSpan) {
-              childSpan.description = "This is a child span";
-            }
-
-            setTimeout(() => {
-              if (childSpan) {
-                childSpan.finish();
-              }
-              if (span) {
-                span.finish();
-              }
-            }, 2000);
-          }
-        );
-      }
-    );
   };
 
   return (
     <IonPage>
-      <Header title="Sentry Testing" />
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>Sentry Test</IonTitle>
+        </IonToolbar>
+      </IonHeader>
       <IonContent>
-        <IonList>
-          <IonItem>
-            <IonText>
-              <h2>Sentry Integration Testing</h2>
-              <p>Use these buttons to test various Sentry features:</p>
-            </IonText>
-          </IonItem>
-
-          <IonItem>
-            <IonButton expand="block" color="danger" onClick={throwError}>
-              Throw Error (Crash)
-            </IonButton>
-          </IonItem>
-
-          <IonItem>
-            <IonButton expand="block" color="warning" onClick={captureException}>
-              Capture Exception
-            </IonButton>
-          </IonItem>
-
-          <IonItem>
-            <IonButton expand="block" color="primary" onClick={createTransaction}>
-              Create Transaction
-            </IonButton>
-          </IonItem>
-
-          <IonItem>
-            <IonButton expand="block" color="secondary" onClick={captureMessage}>
-              Send Test Message
-            </IonButton>
-          </IonItem>
-        </IonList>
+        <div className="ion-padding">
+          <IonButton expand="block" onClick={throwError}>
+            Throw Error
+          </IonButton>
+          <IonButton expand="block" onClick={startTransaction}>
+            Start Transaction
+          </IonButton>
+        </div>
       </IonContent>
     </IonPage>
   );
