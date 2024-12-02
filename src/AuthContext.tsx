@@ -1,6 +1,6 @@
-import React, { createContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useState, useCallback, ReactNode, useContext } from "react";
 
-interface User {
+export interface User {
   id: string;
   username: string;
 }
@@ -12,6 +12,14 @@ interface AuthContextType {
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
 
 interface AuthProviderProps {
   children: ReactNode;

@@ -1,3 +1,10 @@
+export interface SpellImage {
+  id: string;
+  spellId: string;
+  path: string;
+  createdAt: number;
+}
+
 export interface Spell {
   id: string;
   title: string;
@@ -7,6 +14,7 @@ export interface Spell {
   tradition?: string;
   level?: number;
   sourceBook?: string;
+  source?: string;
   tags?: string[];
   images?: string[];
   createdAt: number;
