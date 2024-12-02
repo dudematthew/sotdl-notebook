@@ -21,14 +21,14 @@
     "build:prod": "tsc && vite build --mode production",
     "run:android:dev": "pnpm build:dev && npx cap sync && npx cap run android",
     "run:android:prod": "pnpm build:prod && npx cap sync && npx cap run android",
-    "version:beta": "pnpm version prerelease --preid beta --message 'chore(release): %s [skip ci]'",
-    "version:patch": "pnpm version patch --message 'chore(release): %s [skip ci]'",
-    "version:minor": "pnpm version minor --message 'chore(release): %s [skip ci]'",
-    "version:major": "pnpm version major --message 'chore(release): %s [skip ci]'",
-    "release:beta": "git checkout develop && pnpm version:beta && git push --follow-tags",
-    "release:prod": "git checkout main && pnpm version:patch && git push --follow-tags",
-    "release:minor": "git checkout main && pnpm version:minor && git push --follow-tags",
-    "release:major": "git checkout main && pnpm version:major && git push --follow-tags"
+    "version:beta": "npm version prerelease --preid=beta --message=\"chore(release): %s [skip ci]\"",
+    "version:patch": "npm version patch --message=\"chore(release): %s [skip ci]\"",
+    "version:minor": "npm version minor --message=\"chore(release): %s [skip ci]\"",
+    "version:major": "npm version major --message=\"chore(release): %s [skip ci]\"",
+    "release:beta": "git add . && git commit -m \"chore: prepare beta release\" && git checkout develop && npm run version:beta && git push --follow-tags",
+    "release:prod": "git add . && git commit -m \"chore: prepare release\" && git checkout main && npm run version:patch && git push --follow-tags",
+    "release:minor": "git add . && git commit -m \"chore: prepare minor release\" && git checkout main && npm run version:minor && git push --follow-tags",
+    "release:major": "git add . && git commit -m \"chore: prepare major release\" && git checkout main && npm run version:major && git push --follow-tags"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",
