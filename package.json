@@ -25,10 +25,11 @@
     "version:patch": "npm version patch --message=\"chore(release): %s [skip ci]\"",
     "version:minor": "npm version minor --message=\"chore(release): %s [skip ci]\"",
     "version:major": "npm version major --message=\"chore(release): %s [skip ci]\"",
-    "release:beta": "git add . && git commit -m \"chore: prepare beta release\" && git checkout develop && npm run version:beta && git push --follow-tags",
-    "release:prod": "git add . && git commit -m \"chore: prepare release\" && git checkout main && npm run version:patch && git push --follow-tags",
-    "release:minor": "git add . && git commit -m \"chore: prepare minor release\" && git checkout main && npm run version:minor && git push --follow-tags",
-    "release:major": "git add . && git commit -m \"chore: prepare major release\" && git checkout main && npm run version:major && git push --follow-tags"
+    "prepare-release": "git diff --quiet || (git add . && git commit -m \"chore: prepare release\")",
+    "release:beta": "git checkout develop && (pnpm prepare-release || true) && npm run version:beta && git push --follow-tags",
+    "release:prod": "git checkout main && (pnpm prepare-release || true) && npm run version:patch && git push --follow-tags",
+    "release:minor": "git checkout main && (pnpm prepare-release || true) && npm run version:minor && git push --follow-tags",
+    "release:major": "git checkout main && (pnpm prepare-release || true) && npm run version:major && git push --follow-tags"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",
