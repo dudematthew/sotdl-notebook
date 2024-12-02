@@ -35,13 +35,19 @@ export default defineConfig(({ mode }) => ({
     "import.meta.env.DEV": mode === "development",
   },
   build: {
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes("node_modules")) {
-            return "vendor";
-          }
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ionic-vendor': ['@ionic/react', '@ionic/react-router', 'ionicons'],
+          'sentry-vendor': ['@sentry/react', '@sentry/replay', '@sentry/tracing'],
+          'capacitor-vendor': [
+            '@capacitor/core',
+            '@capacitor/camera',
+            '@capacitor/filesystem',
+            '@capacitor/preferences',
+          ],
         },
       },
     },
