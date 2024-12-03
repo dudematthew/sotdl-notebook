@@ -4,12 +4,23 @@ on:
   push:
     tags:
       - 'v*-beta*'  # Matches v1.0.0-beta.1
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history and tags
+
+      - name: Debug Info
+        run: |
+          echo "Current ref: ${{ github.ref }}"
+          echo "Current tag: ${GITHUB_REF#refs/tags/}"
+          git tag
+          pwd
+          ls -la
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
